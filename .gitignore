@@ -1,4 +1,6 @@
+# python django related ignores
 *.pyc
-__pycache__/
-api/__pycache__/
-api/__pycache__/*
+*/migrations/*
+**/migrations/**
+**/__pycache__/**
+*/__pycache__/*

@@ -16,4 +16,7 @@ urlpatterns = [
     path('balance/<int:id>', BalanceView.as_view(), name="get_balance_by_id"),
     path('friends/', FriendsView.as_view(), name="get_friends_list"),
     path('friends/group/<int:group_id>', FriendsView.as_view(), name="get_friends_list_by_group"),
+    path('addexpense/', ExpenseView.as_view(), name="add_expense"),
+    path('activity/', ActivityView.as_view(), name="view activity"),
+    path('activity/<int:group_id>', ActivityView.as_view(), name="view activity by group id"),
 ]

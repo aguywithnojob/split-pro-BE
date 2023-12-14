@@ -127,6 +127,7 @@ class SettlementView(APIView, LoginRequiredMixin):
         except Exception as e:
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# add new expense to a group by user
 class ExpenseView(APIView, LoginRequiredMixin):
     permission_classes = [IsAuthenticated]
     # add expense
@@ -138,7 +139,28 @@ class ExpenseView(APIView, LoginRequiredMixin):
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            print('expense creation error ==>',e)
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# Activity log of expenses by user or specific group
+class ActivityView(APIView, LoginRequiredMixin):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, group_id=None):
+        try:
+            user_email = request.user
+            if not group_id:
+                expenses = Expense.objects.filter(Q(paid_by__email = user_email) | Q( split_on__email = user_email)).distinct()
+            else:
+                expenses = Expense.objects.filter(Q(paid_by__email = user_email) | Q( split_on__email = user_email), group__id=group_id).distinct()
+
+            serializer = ExpenseSerializer(expenses, many=True)
+            if not serializer.data:
+                return Response("No expenses found for the given user.", status=status.HTTP_404_NOT_FOUND)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            print('activity view error ==>',e)
+            return Response(str(e), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 class FriendsView(APIView, LoginRequiredMixin):
     permission_classes = [IsAuthenticated]

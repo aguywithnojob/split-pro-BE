@@ -114,3 +114,11 @@ class Settlement(models.Model):
         #     "name":"kpa-406",
         #     "customers":2
         # }
+
+        # {
+        #     "paid_by":1,
+        #     "split_on":[1,2,3,4],
+        #     "group":2,
+        #     "item":"milk",
+        #     "amount":90
+        # }

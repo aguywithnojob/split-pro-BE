@@ -2,7 +2,9 @@ from .serializers import (CustomerSerializer,
                           GroupSerializer, 
                           ExpenseSerializer, 
                           BalanceSerializer, 
-                          SettlementSerializer)
+                          SettlementSerializer,
+                          FriendsSerlializer,
+                          GroupFriendSerializer)
 from .models import (Customer, 
                      Group, 
                      Expense, 
@@ -10,11 +12,13 @@ from .models import (Customer,
                      Settlement)
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.http import JsonResponse
 from rest_framework import status
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.mixins import LoginRequiredMixin
 from rest_framework.permissions import IsAuthenticated
+from django.db.models import F, Q
 
 class CustomerView(APIView, LoginRequiredMixin):
     permission_classes = [IsAuthenticated]
@@ -45,11 +49,11 @@ class CustomerView(APIView, LoginRequiredMixin):
     
 class GroupView(APIView, LoginRequiredMixin):
     permission_classes = [IsAuthenticated]
-    def get(self, request, id=None):
+    def get(self, request, user_id=None):
         try:
-            if id:
-                group = Group.objects.get(id=id)
-                serializer = GroupSerializer(group)
+            if user_id:
+                groups = Group.objects.filter(customers__id=user_id)
+                serializer = GroupSerializer(groups, many=True, context={'user_id': user_id})
             else:
                 groups = Group.objects.all()
                 serializer = GroupSerializer(groups, many=True)
@@ -57,6 +61,7 @@ class GroupView(APIView, LoginRequiredMixin):
                 return Response("Records Not Found",status=status.HTTP_404_NOT_FOUND)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
+            print('group error=>>>',e)
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     
@@ -122,13 +127,49 @@ class SettlementView(APIView, LoginRequiredMixin):
         except Exception as e:
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class ExpenseView(APIView, LoginRequiredMixin):
+    permission_classes = [IsAuthenticated]
+    # add expense
+    def post(self, request):
+        try:
+            serializer = ExpenseSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class FriendsView(APIView, LoginRequiredMixin):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, group_id=None):
+        try:
+            user_email = request.user
+            if not group_id:
+                group_id_list = Group.objects.filter(customers__email=user_email).values_list('id', flat=True)
+                friends = Customer.objects.filter(groups__id__in=list(group_id_list)).exclude(email=user_email).distinct()
+            else:
+                group_id_list = Group.objects.filter(id=group_id, customers__email=user_email).values_list('id', flat=True)
+                if not group_id_list:
+                    return Response("Records Not Found",status=status.HTTP_404_NOT_FOUND)
+                friends = Customer.objects.filter(groups__id__in=list(group_id_list)).exclude(email=user_email).distinct()
+            serializer = FriendsSerlializer(friends, many=True)
+            if not serializer.data:
+                return Response("Records Not Found",status=status.HTTP_404_NOT_FOUND)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            print('errpr=>>>',e)
+            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 class LoginView(APIView):
+    @csrf_exempt
     def post(self, request):
         try:
             email = request.data.get('email')
             password = request.data.get('password')
             user = authenticate(request, username=email, password=password)
             if user is not None:
+                request.session.set_expiry(86400*30) # 30 days
                 login(request, user)
                 user_obj = Customer.objects.get(email=email, password=password)
                 return Response({'user_id': user_obj.id}, status=status.HTTP_200_OK)
@@ -142,7 +183,13 @@ class LogoutView(APIView):
     def post(self, request):
         try:
             logout(request)
-            return Response({'message': 'Logout successful'}, status=status.HTTP_200_OK)
+            # delete cookie
+            response = JsonResponse({'message': 'Logout successful'}, status=status.HTTP_200_OK)
+            response.delete_cookie('sessionid')
+            response.delete_cookie('csrftoken')
+            print('cookie===>', request.COOKIES)
+            return response
         except Exception as e:
+            print('error logout ==>',e)
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         

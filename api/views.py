@@ -4,7 +4,8 @@ from .serializers import (CustomerSerializer,
                           BalanceSerializer, 
                           SettlementSerializer,
                           FriendsSerlializer,
-                          GroupFriendSerializer)
+                          ActivitySerializer
+                          )
 from .models import (Customer, 
                      Group, 
                      Expense, 
@@ -153,7 +154,7 @@ class ActivityView(APIView, LoginRequiredMixin):
             else:
                 expenses = Expense.objects.filter(Q(paid_by__email = user_email) | Q( split_on__email = user_email), group__id=group_id).distinct()
 
-            serializer = ExpenseSerializer(expenses, many=True)
+            serializer = ActivitySerializer(expenses, many=True, context = {'user_email': user_email.email})
             if not serializer.data:
                 return Response("No expenses found for the given user.", status=status.HTTP_404_NOT_FOUND)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -201,15 +202,11 @@ class LoginView(APIView):
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LogoutView(APIView):
-    @csrf_exempt
-    def post(self, request):
+    def get(self, request):
         try:
             logout(request)
             # delete cookie
             response = JsonResponse({'message': 'Logout successful'}, status=status.HTTP_200_OK)
-            response.delete_cookie('sessionid')
-            response.delete_cookie('csrftoken')
-            print('cookie===>', request.COOKIES)
             return response
         except Exception as e:
             print('error logout ==>',e)

@@ -52,6 +52,32 @@ class ExpenseSerializer(serializers.ModelSerializer):
         representation = super(ExpenseSerializer, self).to_representation(instance)
         representation['timestamp'] = convert_epoch_to_datetime(representation['timestamp'])
         representation['updatetimestamp'] = convert_epoch_to_datetime(representation['updatetimestamp'])
+        representation['split_on'] = friends_list
+        return representation
+
+class ActivitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Expense
+        fields = ['id', 'item', 'amount', 'group','paid_by' ,'split_on','timestamp', 'updatetimestamp']
+    
+    def to_representation(self, instance):
+        representation = super(ActivitySerializer, self).to_representation(instance)
+        representation['timestamp'] = convert_epoch_to_datetime(representation['timestamp'])
+        representation['updatetimestamp'] = convert_epoch_to_datetime(representation['updatetimestamp'])
+        friend_data = CustomerSerializer(instance.split_on, many=True).data
+        friends_list = []
+        for friend in friend_data:
+            if self.context.get('user_email') != friend['email']: 
+                friends_list.append(friend['name']) 
+        representation['split_on'] = friends_list
+
+        if self.context.get('user_email') != instance.paid_by.email :
+            representation['share'] = -(instance.amount/len(friends_list))
+        else: 
+            representation['share'] = round(instance.amount - (instance.amount/len(friends_list)),2)
+        
+        representation['paid_by'] = instance.paid_by.name
+        representation['group'] = instance.group.name
         return representation
 
 class BalanceSerializer(serializers.ModelSerializer):

@@ -20,6 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.mixins import LoginRequiredMixin
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import F, Q
+from .helper import calculate_overall_balance
 
 class CustomerView(APIView, LoginRequiredMixin):
     permission_classes = [IsAuthenticated]
@@ -35,7 +36,6 @@ class CustomerView(APIView, LoginRequiredMixin):
                 return Response("Records Not Found",status=status.HTTP_404_NOT_FOUND)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            print('userview =-==>',e)
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def post(self, request):
@@ -143,6 +143,19 @@ class SettlementView(APIView, LoginRequiredMixin):
 # add new expense to a group by user
 class ExpenseView(APIView, LoginRequiredMixin):
     permission_classes = [IsAuthenticated]
+    # get expense by id
+    def get(self, request, id=None):
+        try:
+            if not id:
+                return Response("Bad Request expense Id missing",status=status.HTTP_400_BAD_REQUEST)
+            expense = Expense.objects.get(id=id)
+            serializer = ExpenseSerializer(expense)
+            if not serializer.data:
+                return Response("Records Not Found",status=status.HTTP_404_NOT_FOUND)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            print('errpr>>>', e)
+            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     # add expense
     def post(self, request):
         try:
@@ -153,6 +166,19 @@ class ExpenseView(APIView, LoginRequiredMixin):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             print('expense creation error ==>',e)
+            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # update by id
+    def put(self, request, id):
+        try:
+            expense = Expense.objects.get(id=id)
+            serializer = ExpenseSerializer(expense, data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print('e ===>', e)
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # Activity log of expenses by user or specific group
@@ -181,7 +207,6 @@ class FriendsView(APIView, LoginRequiredMixin):
         try:
             user_email = request.user
             if not group_id:
-                print('group_id===>', group_id)
                 group_id_list = Group.objects.filter(customers__email=user_email).values_list('id', flat=True)
                 friends = Customer.objects.filter(groups__id__in=list(group_id_list)).exclude(email=user_email).distinct()
             else:
@@ -189,12 +214,12 @@ class FriendsView(APIView, LoginRequiredMixin):
                 if not group_id_list:
                     return Response("Records Not Found",status=status.HTTP_404_NOT_FOUND)
                 friends = Customer.objects.filter(groups__id__in=list(group_id_list)).exclude(email=user_email).distinct()
-            serializer = FriendsSerlializer(friends, many=True)
+            serializer = FriendsSerlializer(friends, many=True, context = {'user_email': user_email.email})
             if not serializer.data:
                 return Response("Records Not Found",status=status.HTTP_404_NOT_FOUND)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            print('errpr=>>>',e)
+            print('FriendsView=>>>',e)
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class LoginView(APIView):
@@ -226,3 +251,18 @@ class LogoutView(APIView):
             print('error logout ==>',e)
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+class OverallBalanceView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        try:
+            user_email = request.user.email
+            overall_balance = calculate_overall_balance(user_email)
+            return JsonResponse({'overall_balance': overall_balance}, status=status.HTTP_200_OK)
+        
+        except ValueError as e:
+            print('ValueError =>>> ',e)
+            return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+        
+        except Exception as e:
+            print('OverallBalanceView =>>> ',e)
+            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)

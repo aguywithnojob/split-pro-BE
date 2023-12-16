@@ -51,7 +51,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
         representation = super(ExpenseSerializer, self).to_representation(instance)
         representation['timestamp'] = convert_epoch_to_datetime(representation['timestamp'])
         representation['updatetimestamp'] = convert_epoch_to_datetime(representation['updatetimestamp'])
-        representation['split_on'] = friends_list
+        representation['split_on'] = CustomerSerializer(instance.split_on, many=True).data
         return representation
 
 class ActivitySerializer(serializers.ModelSerializer):

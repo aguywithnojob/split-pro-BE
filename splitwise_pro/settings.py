@@ -88,7 +88,7 @@ DATABASES = {
         'NAME': 'splitwise',
         'USER': 'root',
         'PASSWORD': 'root',
-        'HOST': '0.0.0.0',
+        'HOST': '192.168.0.102',
         'PORT': '5432',
     }
 }
@@ -138,7 +138,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
-    ]
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES' : (
+        'splitwise_pro.drf_custom_authentication.CsrfExemptSessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication'
+    ),
 }
 
 CORS_ALLOW_ALL_ORIGINS = True
@@ -148,3 +152,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://0.0.0.0:3000",
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+]
+

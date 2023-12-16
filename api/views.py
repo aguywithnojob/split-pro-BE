@@ -143,7 +143,7 @@ class SettlementView(APIView, LoginRequiredMixin):
 # add new expense to a group by user
 class ExpenseView(APIView, LoginRequiredMixin):
     permission_classes = [IsAuthenticated]
-    # add expense
+    
     def post(self, request):
         try:
             serializer = ExpenseSerializer(data=request.data)

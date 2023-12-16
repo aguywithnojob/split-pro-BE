@@ -116,13 +116,25 @@ class SettlementView(APIView, LoginRequiredMixin):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+    # add settlement
     def post(self, request):
         try:
             serializer = SettlementSerializer(data=request.data)
             if serializer.is_valid():
+                # after saving settlement entry make a new entry into expense table with paid_by and split_on single person
+                settlement = serializer.save()
 
-                serializer.save()
+                # Create a new entry in the Expense table
+                expense_data = {
+                    'paid_by': request.data.paid_by,
+                    'split_on': [request.data.paid_to],
+                    'group': settlement.group.id,
+                    'item': 'Settlement',
+                    'amount': request.data.amount
+                }
+                expense_serializer = ExpenseSerializer(data=expense_data)
+                if expense_serializer.is_valid():
+                    expense_serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
@@ -169,6 +181,7 @@ class FriendsView(APIView, LoginRequiredMixin):
         try:
             user_email = request.user
             if not group_id:
+                print('group_id===>', group_id)
                 group_id_list = Group.objects.filter(customers__email=user_email).values_list('id', flat=True)
                 friends = Customer.objects.filter(groups__id__in=list(group_id_list)).exclude(email=user_email).distinct()
             else:
@@ -199,6 +212,7 @@ class LoginView(APIView):
             else:
                 return  Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
+            print('error login ==>',e)
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LogoutView(APIView):

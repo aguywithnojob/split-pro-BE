@@ -143,6 +143,7 @@ class SettlementView(APIView, LoginRequiredMixin):
 # add new expense to a group by user
 class ExpenseView(APIView, LoginRequiredMixin):
     permission_classes = [IsAuthenticated]
+
     # get expense by id
     def get(self, request, id=None):
         try:

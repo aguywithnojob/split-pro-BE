@@ -1,5 +1,6 @@
-from django.urls import path
+from django.urls import path, re_path
 from .views import *
+from .metadata_views import MetaData
 
 urlpatterns = [
     path('login/',LoginView.as_view(),name='login'),
@@ -23,3 +24,9 @@ urlpatterns = [
     path('activity/<int:group_id>', ActivityView.as_view(), name="view activity by group id"),
     path('overallbalance/', OverallBalanceView.as_view(), name="view overall balance"),
 ]
+
+metadata_view_urlpatterns = [
+    path('metadata/<str:kind>/<int:key_id>/', MetaData.as_view(), name="get_metadata"),
+]
+
+urlpatterns += metadata_view_urlpatterns

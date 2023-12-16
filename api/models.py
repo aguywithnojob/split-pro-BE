@@ -8,7 +8,7 @@ class Customer(models.Model):
     password = models.CharField(max_length=255)
     mobile = models.CharField(max_length=10, unique=True)
     avatar = models.URLField(null=True, blank=True)
-    django_user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    django_user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name="customer")
     # timestamp epoch time
     timestamp = models.IntegerField(blank=True, null=True)
     class Meta:

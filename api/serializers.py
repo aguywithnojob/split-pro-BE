@@ -12,7 +12,6 @@ class CustomerSerializer(serializers.ModelSerializer):
         representation['timestamp'] = convert_epoch_to_datetime(representation['timestamp'])
         return representation
 
-
 class FriendsSerlializer(serializers.ModelSerializer):
     class Meta:
         model = Customer

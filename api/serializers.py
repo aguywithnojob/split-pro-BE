@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Customer, Group, Expense, Balance,  Settlement
 from .helper import convert_epoch_to_datetime
+
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
@@ -10,7 +11,6 @@ class CustomerSerializer(serializers.ModelSerializer):
         representation = super(CustomerSerializer, self).to_representation(instance)
         representation['timestamp'] = convert_epoch_to_datetime(representation['timestamp'])
         return representation
-
 
 class FriendsSerlializer(serializers.ModelSerializer):
     class Meta:
@@ -51,7 +51,17 @@ class ExpenseSerializer(serializers.ModelSerializer):
         representation = super(ExpenseSerializer, self).to_representation(instance)
         representation['timestamp'] = convert_epoch_to_datetime(representation['timestamp'])
         representation['updatetimestamp'] = convert_epoch_to_datetime(representation['updatetimestamp'])
-        representation['split_on'] = CustomerSerializer(instance.split_on, many=True).data
+
+        FriendsData = CustomerSerializer(instance.split_on, many=True).data
+        representation['paid_by'] = {'id':instance.paid_by.id, 'name':instance.paid_by.name}
+        friends_list = []
+        for friend in FriendsData:
+            if self.context.get('user_id') != friend['id']: 
+                friends_list.append({'id':friend['id'],'name':friend['name']}) 
+        
+        representation['split_on'] = friends_list
+
+        representation['group'] = {'id':instance.group.id, 'name':instance.group.name}
         return representation
 
 class ActivitySerializer(serializers.ModelSerializer):

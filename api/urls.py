@@ -15,12 +15,14 @@ urlpatterns = [
     path('settlement/<int:id>', SettlementView.as_view(), name="get_settlement_by_id"),
     path('settlement/create', SettlementView.as_view(), name="create_settlement"),
     path('balance/<int:id>', BalanceView.as_view(), name="get_balance_by_id"),
-    path('friends/', FriendsView.as_view(), name="get_friends_list"),
+    path('friends/', FriendsView.as_view(), name="get_friends_list_with_balance"),
     path('friends/group/<int:group_id>', FriendsView.as_view(), name="get_friends_list_by_group"),
     path('friends/group/', FriendsView.as_view(), name="get_all_friends_list"),
     path('addexpense/', ExpenseView.as_view(), name="add_expense"),
+    path('expense/<int:id>', ExpenseView.as_view(), name="get_expense_by_id"),
     path('activity/', ActivityView.as_view(), name="view activity"),
     path('activity/<int:group_id>', ActivityView.as_view(), name="view activity by group id"),
+    path('overallbalance/', OverallBalanceView.as_view(), name="view overall balance"),
 ]
 
 metadata_view_urlpatterns = [

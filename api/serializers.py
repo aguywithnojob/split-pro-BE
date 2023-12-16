@@ -4,11 +4,10 @@ from .helper import convert_epoch_to_datetime
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
-        fields = ['id', 'name', 'email','avatar', 'timestamp']
+        fields = ['id', 'name', 'email','avatar', 'mobile','timestamp']
     
     def to_representation(self, instance):
         representation = super(CustomerSerializer, self).to_representation(instance)
-        # representation['password'] = '*'*len(representation['password'])
         representation['timestamp'] = convert_epoch_to_datetime(representation['timestamp'])
         return representation
 

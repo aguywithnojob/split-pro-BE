@@ -90,6 +90,7 @@ class Settlement(models.Model):
     paid_to = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="settlements_paid_to")
     amount = models.FloatField()
     mode = models.CharField(max_length=50, default="cash")
+    expense_included = models.ManyToManyField(Expense, related_name="expenses")
     timestamp = models.IntegerField(blank=True, null=True)
     class Meta:
         db_table = "settlements"

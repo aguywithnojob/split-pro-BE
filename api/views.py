@@ -143,7 +143,6 @@ class SettlementView(APIView, LoginRequiredMixin):
 # add new expense to a group by user
 class ExpenseView(APIView, LoginRequiredMixin):
     permission_classes = [IsAuthenticated]
-
     # get expense by id
     def get(self, request, id=None):
         try:
@@ -189,10 +188,10 @@ class ActivityView(APIView, LoginRequiredMixin):
         try:
             user_email = request.user
             if not group_id:
-                expenses = Expense.objects.filter(Q(paid_by__email = user_email) | Q( split_on__email = user_email)).distinct()
+                expenses = Expense.objects.filter(Q(paid_by__email = user_email) | Q( split_on__email = user_email)).distinct().order_by('-timestamp')
             else:
-                expenses = Expense.objects.filter(Q(paid_by__email = user_email) | Q( split_on__email = user_email), group__id=group_id).distinct()
-
+                expenses = Expense.objects.filter(Q(paid_by__email = user_email) | Q( split_on__email = user_email), group__id=group_id).distinct().order_by('-timestamp')
+                print('queryy==>>>>', expenses.query)
             serializer = ActivitySerializer(expenses, many=True, context = {'user_email': user_email.email})
             if not serializer.data:
                 return Response("No expenses found for the given user.", status=status.HTTP_404_NOT_FOUND)
@@ -267,3 +266,23 @@ class OverallBalanceView(APIView):
         except Exception as e:
             print('OverallBalanceView =>>> ',e)
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# class MetricView(APIView):
+#     '''
+#     API to calculate monthly expense for user
+#     '''
+#     permission_classes = [IsAuthenticated]
+#     def get(self, request):
+#         try:
+#             user_email = request.user.email
+#             month = request.data.month
+#             metric = calculate_monthly_expense(user_email, month)
+#             return JsonResponse({'metric': metric}, status=status.HTTP_200_OK)
+        
+#         except ValueError as e:
+#             print('ValueError =>>> ',e)
+#             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
+        
+#         except Exception as e:
+#             print('MetricView =>>> ',e)
+#             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)

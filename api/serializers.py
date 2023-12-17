@@ -77,7 +77,7 @@ class ActivitySerializer(serializers.ModelSerializer):
         friends_list = []
         for friend in friend_data:
             if self.context.get('user_email') != friend['email']: 
-                friends_list.append(friend['name']) 
+                friends_list.append({'id':friend['id'],'name':friend['name']}) 
         representation['split_on'] = friends_list
 
         if self.context.get('user_email') != instance.paid_by.email :
@@ -85,8 +85,8 @@ class ActivitySerializer(serializers.ModelSerializer):
         else: 
             representation['share'] = round(instance.amount - (instance.amount/len(friends_list)),2)
         
-        representation['paid_by'] = instance.paid_by.name
-        representation['group'] = instance.group.name
+        representation['paid_by'] = {'id':instance.paid_by.id, 'name':instance.paid_by.name}
+        representation['group'] = {'id':instance.group.id, 'name':instance.group.name}
         return representation
 
 class BalanceSerializer(serializers.ModelSerializer):

@@ -34,7 +34,7 @@ def calculate_overall_balance(user_email):
 def calculate_share_on_each(context, instance):
     # if current_user didn't pay and he is part of split_on
     if (context.get('user_email') != instance.paid_by.email) and (context.get('user_email') in instance.split_on.values_list('email', flat=True)):
-        share = -(instance.amount/instance.split_on.all().count())
+        share = -round(instance.amount/instance.split_on.all().count(), 2)
     elif (context.get('user_email') != instance.paid_by.email) and (context.get('user_email') not in instance.split_on.values_list('email', flat=True)):
         share = 0
     # if current_user paid and he is part of split_on
@@ -45,58 +45,38 @@ def calculate_share_on_each(context, instance):
     
     return share
 
-    # result_dict = {}
-    # all_users = (badal, gautam, kartikey, tushar)
-    # for user in all_users:
-    #     if user.username not in result_dict:
-    #         result_dict[user.username] = dict(pay = 0, get = 0)
-
-    #     filtered_expenses = Expenses.objects.filter(paid_by=user).exclude(settlments__expense__in=Expenses.objects.filter(paid_by=user).values_list('id', flat=True))
-    #     print(filtered_expenses.query)
-
-    #     for exp in filtered_expenses: # exp must not present in settlement table for this user
-    #         # result_dict[user.username]['get'] += exp.amount
-    #         amount = exp.amount
-    #         share = amount/4
-    #         result_dict[user.username]['get'] = share * 3 
-
-    #         for share_user in all_users:
-    #             if share_user != user:
-    #                 if share_user.username not in result_dict:
-    #                     result_dict[share_user.username] = dict(pay = 0, get = 0)
-    #                 result_dict[share_user.username]['pay'] += share
-
-# method simplify debts in a group
+# method to simplidy debts for a group
 def simplify_debts(group_id):
     result_dict = {}
-    user_list = Customer.objects.filter(groups__id=group_id).values_list('id','name')
-    
+    user_list = Customer.objects.filter(groups__id=group_id)
     for user_tuple in user_list:
         if user_tuple not in result_dict:
             result_dict[user_tuple] = dict(pay = 0, get = 0)
 
-        filtered_expenses = Expense.objects.filter(paid_by=user_tuple[0]).exclude(id__in = Expense.objects.filter(paid_by=user_tuple[0]).values_list('id', flat=True))
-        print(filtered_expenses.query)
+        filtered_expenses = Expense.objects.filter(paid_by=user_tuple, group_id=group_id).exclude(expenses__expense_included__in = Expense.objects.filter(paid_by=user_tuple, group_id=group_id).values_list('id', flat=True))
 
         for exp in filtered_expenses: # exp must not present in settlement table for this user
-            # result_dict[user.username]['get'] += exp.amount
             amount = exp.amount
-            if (user_tuple[0] in exp.split_on.all()):    
+            if (user_tuple.id in exp.split_on.all().values_list('id', flat=True)):    
                 #if payer is also part of the split
-                share = (amount/exp.split_on.count()) * (exp.split_on.count() - 1)
+                share = round((amount/exp.split_on.count()) * (exp.split_on.count() - 1), 2)
             else:       
                 #if payer is not part of the split
                 share = amount
-            result_dict[user_tuple]['get'] = share
-
+            result_dict[user_tuple]['get'] += share
+            
+            # for current expense dividing amount among users who have to pay
             for share_user in user_list:
                 if share_user != user_tuple:
                     if share_user not in result_dict:
                         result_dict[share_user] = dict(pay = 0, get = 0)
-                    result_dict[share_user]['pay'] += share
+                    
+                    # share_user is involved in transaction then he has to pay the expense amount
+                    if (share_user.id in exp.split_on.all().values_list('id', flat=True)):
+                        result_dict[share_user]['pay'] += round(exp.amount/exp.split_on.count(), 2)
 
     balances = {}
-
+    
     # Calculate net amount for each person
     for person, details in result_dict.items():
         pay = details['pay']
@@ -106,7 +86,7 @@ def simplify_debts(group_id):
     # Identify people who owe and people who are owed
     creditors = {person: amount for person, amount in balances.items() if amount > 0}
     debtors = {person: -amount for person, amount in balances.items() if amount < 0}
-
+    
     # Build a list of transactions using the Debt Graph algorithm
     transactions = []
     for debtor, debtor_amount in debtors.items():
@@ -122,12 +102,11 @@ def simplify_debts(group_id):
             creditor_amount -= transfer_amount
 
             # Add the transaction to the list
-            transactions.append((debtor, creditor, transfer_amount))
+            transactions.append(({"paid_by":{"id":debtor.id, "name":debtor.name}}, {"paid_to":{"id":creditor.id, "name":creditor.name}}, transfer_amount))
 
             # Update balances and remove creditors with a balance of 0
             creditors[creditor] = creditor_amount
             if creditor_amount == 0:
                 del creditors[creditor]
 
-    print(transactions)  
     return transactions

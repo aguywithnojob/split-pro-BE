@@ -1,7 +1,6 @@
 from .serializers import (CustomerSerializer, 
                           GroupSerializer, 
-                          ExpenseSerializer, 
-                          BalanceSerializer, 
+                          ExpenseSerializer,
                           SettlementSerializer,
                           FriendsSerlializer,
                           ActivitySerializer
@@ -9,7 +8,6 @@ from .serializers import (CustomerSerializer,
 from .models import (Customer, 
                      Group, 
                      Expense, 
-                     Balance, 
                      Settlement)
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -27,7 +25,10 @@ class CustomerView(APIView, LoginRequiredMixin):
     def get(self, request, id=None):
         try:
             if id:
-                customer = Customer.objects.get(id=id)
+                try:
+                    customer = Customer.objects.get(id=id)
+                except Customer.DoesNotExist:
+                    return Response("User not found",status=status.HTTP_404_NOT_FOUND)
                 serializer = CustomerSerializer(customer)
             else:
                 customers = Customer.objects.all()
@@ -46,6 +47,7 @@ class CustomerView(APIView, LoginRequiredMixin):
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            print('err ==>>',e)
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
     
 class GroupView(APIView, LoginRequiredMixin):
@@ -88,18 +90,6 @@ class GroupView(APIView, LoginRequiredMixin):
         except Exception as e:
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class BalanceView(APIView, LoginRequiredMixin):
-    permission_classes = [IsAuthenticated]
-    # get by id
-    def get(self, request, id):
-        try:
-            balance = Balance.objects.get(customer__id=id)
-            serializer = BalanceSerializer(balance)
-            if not serializer.data:
-                return Response("Records Not Found",status=status.HTTP_404_NOT_FOUND)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception as e:
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class SettlementView(APIView, LoginRequiredMixin):
     permission_classes = [IsAuthenticated]

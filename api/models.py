@@ -70,20 +70,6 @@ class Expense(models.Model):
             self.updatetimestamp = int(datetime.now().timestamp())
         super().save(*args, **kwargs)
 
-# customer outstanding balance (need to pay or need to recieve)
-class Balance(models.Model):
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="balances")
-    amount = models.FloatField(default=0.00)
-    timestamp = models.IntegerField(blank=True, null=True)
-    class Meta:
-        db_table = "balances"
-    def __str__(self):
-        return self.customer__name+" : "+self.amount
-    def save(self, *args, **kwargs):
-        # Convert epoch timestamp to datetime before saving
-        if not self.timestamp:
-            self.timestamp = int(datetime.now().timestamp())
-        super().save(*args, **kwargs)
 
 class Settlement(models.Model):
     paid_by = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="settlements_paid_by")
@@ -109,11 +95,10 @@ class Settlement(models.Model):
         #     "name":"gautam",
         #     "mobile":1234234,
         #     "password":"gautam1234",
-        #     "django_user":1
         # }
         # {
-        #     "name":"kpa-406",
-        #     "customers":2
+        #     "name":"test-1",
+        #     "customers":[2,3,4,5]
         # }
 
         # {
@@ -123,3 +108,7 @@ class Settlement(models.Model):
         #     "item":"milk",
         #     "amount":90
         # }
+
+
+
+    

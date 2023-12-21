@@ -14,7 +14,6 @@ urlpatterns = [
     path('settlement/', SettlementView.as_view(), name="get_settlement"),
     path('settlement/<int:id>', SettlementView.as_view(), name="get_settlement_by_id"),
     path('settlement/create', SettlementView.as_view(), name="create_settlement"),
-    path('balance/<int:id>', BalanceView.as_view(), name="get_balance_by_id"),
     path('friends/', FriendsView.as_view(), name="get_friends_list_with_balance"),
     path('friends/group/<int:group_id>', FriendsView.as_view(), name="get_friends_list_by_group"),
     path('friends/group/', FriendsView.as_view(), name="get_all_friends_list"),

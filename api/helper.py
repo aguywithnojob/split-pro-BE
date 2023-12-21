@@ -102,7 +102,7 @@ def simplify_debts(group_id):
             creditor_amount -= transfer_amount
 
             # Add the transaction to the list
-            transactions.append(({"paid_by":{"id":debtor.id, "name":debtor.name}}, {"paid_to":{"id":creditor.id, "name":creditor.name}}, transfer_amount))
+            transactions.append(({"paid_by":{"id":debtor.id, "name":debtor.name}}, {"paid_to":{"id":creditor.id, "name":creditor.name}}, round(transfer_amount,2)))
 
             # Update balances and remove creditors with a balance of 0
             creditors[creditor] = creditor_amount

@@ -35,8 +35,24 @@ class GroupSerializer(serializers.ModelSerializer):
                 friends_list.append(friend['name']) 
         
         representation['customers'] = friends_list
-        # call smplify_debts function with group_id
-        representation['friends_debts'] = simplify_debts(instance.id)
+        return representation
+
+class SimplifyDebitsInGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ['id', 'name']
+    
+    def to_representation(self, instance):
+        representation = super(SimplifyDebitsInGroupSerializer, self).to_representation(instance)
+        debts_list = simplify_debts(instance.id)
+        representation['friends_debts'] = debts_list
+        overall_amount = 0
+        for debt in debts_list:
+            if debt[0].get('paid_by').get('id') == self.context.get('user_id'):
+                overall_amount -= debt[2]
+            elif debt[1].get('paid_to').get('id') == self.context.get('user_id'):
+                overall_amount += debt[2]
+        representation['user_debts'] = overall_amount
         return representation
     
 class GroupFriendSerializer(serializers.ModelSerializer):

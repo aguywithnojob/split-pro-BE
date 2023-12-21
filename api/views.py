@@ -3,7 +3,8 @@ from .serializers import (CustomerSerializer,
                           ExpenseSerializer,
                           SettlementSerializer,
                           FriendsSerlializer,
-                          ActivitySerializer
+                          ActivitySerializer,
+                          SimplifyDebitsInGroupSerializer
                           )
 from .models import (Customer, 
                      Group, 
@@ -56,7 +57,7 @@ class GroupView(APIView, LoginRequiredMixin):
         try:
             if user_id:
                 groups = Group.objects.filter(customers__id=user_id)
-                serializer = GroupSerializer(groups, many=True, context={'user_id': user_id})
+                serializer = SimplifyDebitsInGroupSerializer(groups, many=True, context={'user_id': user_id})
             else:
                 groups = Group.objects.all()
                 serializer = GroupSerializer(groups, many=True)
@@ -181,7 +182,7 @@ class ActivityView(APIView, LoginRequiredMixin):
                 expenses = Expense.objects.filter(Q(paid_by__email = user_email) | Q( split_on__email = user_email)).distinct().order_by('-timestamp')
             else:
                 expenses = Expense.objects.filter(Q(paid_by__email = user_email) | Q( split_on__email = user_email), group__id=group_id).distinct().order_by('-timestamp')
-                print('queryy==>>>>', expenses.query)
+
             serializer = ActivitySerializer(expenses, many=True, context = {'user_email': user_email.email})
             if not serializer.data:
                 return Response("No expenses found for the given user.", status=status.HTTP_404_NOT_FOUND)

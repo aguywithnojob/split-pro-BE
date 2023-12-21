@@ -52,7 +52,7 @@ class SimplifyDebitsInGroupSerializer(serializers.ModelSerializer):
                 overall_amount -= debt[2]
             elif debt[1].get('paid_to').get('id') == self.context.get('user_id'):
                 overall_amount += debt[2]
-        representation['user_debts'] = overall_amount
+        representation['user_debts'] = round(overall_amount,2)
         return representation
     
 class GroupFriendSerializer(serializers.ModelSerializer):

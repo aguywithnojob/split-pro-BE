@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Customer, Group, Expense, Settlement
-from .helper import convert_epoch_to_datetime, simplify_debts, calculate_share_on_each
+from .helper import convert_epoch_to_datetime, simplify_debts, calculate_share_on_each, calculate_individual_share
 
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,6 +18,21 @@ class FriendsSerlializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ['id','name']
+    
+class FriendsWithBalanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = ['id','name','avatar']
+
+    def to_representation(self, instance):
+        representation = super(FriendsWithBalanceSerializer, self).to_representation(instance)
+        group_obj = Group.objects.filter(customers__id=instance.id).values_list('id', flat=True)
+        balance = 0
+        for group_id in group_obj:
+            debts_list = simplify_debts(group_id)
+            balance += calculate_individual_share(self.context.get('user_id'),instance.id, debts_list)
+        representation['balance'] = round(balance, 2)
+        return representation
 
 class GroupSerializer(serializers.ModelSerializer):
     class Meta:

@@ -4,7 +4,8 @@ from .serializers import (CustomerSerializer,
                           SettlementSerializer,
                           FriendsSerlializer,
                           ActivitySerializer,
-                          SimplifyDebitsInGroupSerializer
+                          SimplifyDebitsInGroupSerializer,
+                          FriendsWithBalanceSerializer
                           )
 from .models import (Customer, 
                      Group, 
@@ -200,12 +201,13 @@ class FriendsView(APIView, LoginRequiredMixin):
             if not group_id:
                 group_id_list = Group.objects.filter(customers__email=user_email).values_list('id', flat=True)
                 friends = Customer.objects.filter(groups__id__in=list(group_id_list)).exclude(email=user_email).distinct()
+                serializer = FriendsWithBalanceSerializer(friends, many=True, context = {'user_id': user_email.customer.id})
             else:
                 group_id_list = Group.objects.filter(id=group_id, customers__email=user_email).values_list('id', flat=True)
                 if not group_id_list:
                     return Response("Records Not Found",status=status.HTTP_404_NOT_FOUND)
                 friends = Customer.objects.filter(groups__id__in=list(group_id_list)).exclude(email=user_email).distinct()
-            serializer = FriendsSerlializer(friends, many=True, context = {'user_email': user_email.email})
+                serializer = FriendsSerlializer(friends, many=True, context = {'user_email': user_email.email})
             if not serializer.data:
                 return Response("Records Not Found",status=status.HTTP_404_NOT_FOUND)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -247,10 +249,12 @@ class OverallBalanceView(APIView):
     def get(self, request, group_id = None):
         try:
             user_email = request.user.email
-            try:
-                Group.objects.get(customers__email=user_email, id=group_id)
-            except Group.DoesNotExist:
-                return Response("Bad Request. Group Does Not Exist",status=status.HTTP_400_BAD_REQUEST)
+            if group_id:
+                try:
+                    Group.objects.get(customers__email=user_email, id=group_id)
+                except Group.DoesNotExist:
+                    return Response("Bad Request. Group Does Not Exist",status=status.HTTP_400_BAD_REQUEST)
+            
             overall_balance = calculate_overall_balance(user_email, group_id)
             return JsonResponse({'overall_balance': overall_balance}, status=status.HTTP_200_OK)
         except ValueError as e:

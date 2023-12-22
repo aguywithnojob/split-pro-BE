@@ -120,3 +120,15 @@ def simplify_debts(group_id):
                 del creditors[creditor]
 
     return transactions
+
+
+def calculate_individual_share(current_user_id, friend_id, debt_list ):
+    overall_amount = 0
+    for debt in debt_list:
+        # paid_by is current_user and paid_to is my friend or vice versa then calculate share amount
+        if (debt[0].get('paid_by').get('id') == current_user_id) and (debt[1].get('paid_to').get('id') == friend_id):
+            overall_amount -= debt[2]
+        
+        if (debt[0].get('paid_by').get('id') == friend_id) and (debt[1].get('paid_to').get('id') == current_user_id):
+            overall_amount += debt[2]
+    return round(overall_amount,2)

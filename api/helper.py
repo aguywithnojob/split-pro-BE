@@ -10,24 +10,34 @@ def convert_epoch_to_datetime(epoch):
         formatted_dt = dt.strftime("%d %b, %I:%M %p")
     return formatted_dt
 
-def calculate_overall_balance(user_email):
+def calculate_overall_balance(user_email, group_id = None):
     paid_amount = 0
     split_amount = 0
     user_obj = Customer.objects.get(email=user_email)
+
     if not user_obj:
         # throw error user not found
         raise ValueError('User not found')
-    # in which you paid
-    paid_by_obj = Expense.objects.filter(Q(paid_by=user_obj)|Q(split_on__in=[user_obj])).distinct()
     
-    # cash flow would be sum(paid_amount) - sum(split_amount)
+    if group_id:
+        # group in which you paid or you are part of split_on
+        paid_by_obj = Expense.objects.filter(Q(Q(paid_by=user_obj)| Q(split_on__in=[user_obj])) & Q(group__id=group_id)).distinct()
+    else:
+        # in which you paid or you are part of split_on
+        paid_by_obj = Expense.objects.filter(Q(paid_by=user_obj)|Q(split_on__in=[user_obj])).distinct()
+    
     for expense_obj in paid_by_obj:
         if user_obj == expense_obj.paid_by:
-            paid_amount += expense_obj.amount 
+            if (user_obj not in expense_obj.split_on.all()):
+                paid_amount += expense_obj.amount
+            else:
+                # calculate paid amount which is ((totalamount/number of people) * number of people - 1)
+                paid_amount += ((expense_obj.amount/expense_obj.split_on.count()) * (expense_obj.split_on.count() - 1))
         elif (user_obj in expense_obj.split_on.all()) :
-            split_amount += expense_obj.amount
+            if (user_obj in expense_obj.split_on.all()):
+                split_amount += (expense_obj.amount/expense_obj.split_on.count())
 
-    return paid_amount - split_amount
+    return round(paid_amount - split_amount, 2)
 
 
 # method to calculate share on each person w.r.t to current_user

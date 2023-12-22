@@ -244,18 +244,19 @@ class LogoutView(APIView):
         
 class OverallBalanceView(APIView):
     permission_classes = [IsAuthenticated]
-    def get(self, request):
+    def get(self, request, group_id = None):
         try:
             user_email = request.user.email
-            overall_balance = calculate_overall_balance(user_email)
+            try:
+                Group.objects.get(customers__email=user_email, id=group_id)
+            except Group.DoesNotExist:
+                return Response("Bad Request. Group Does Not Exist",status=status.HTTP_400_BAD_REQUEST)
+            overall_balance = calculate_overall_balance(user_email, group_id)
             return JsonResponse({'overall_balance': overall_balance}, status=status.HTTP_200_OK)
-        
         except ValueError as e:
-            print('ValueError =>>> ',e)
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
         
         except Exception as e:
-            print('OverallBalanceView =>>> ',e)
             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # class MetricView(APIView):

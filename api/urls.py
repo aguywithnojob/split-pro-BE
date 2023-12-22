@@ -21,7 +21,8 @@ urlpatterns = [
     path('expense/<int:id>', ExpenseView.as_view(), name="get_expense_by_id"),
     path('activity/', ActivityView.as_view(), name="view activity"),
     path('activity/<int:group_id>', ActivityView.as_view(), name="view activity by group id"),
-    path('overallbalance/', OverallBalanceView.as_view(), name="view overall balance"),
+    path('overallbalance/', OverallBalanceView.as_view(), name="view overall balance w.r.t current user"),
+    path('overallbalance/<int:group_id>', OverallBalanceView.as_view(), name="view overall balance w.r.t current user in a group"),
 ]
 
 metadata_view_urlpatterns = [

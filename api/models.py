@@ -53,7 +53,7 @@ class Group(models.Model):
 class Expense(models.Model):
     paid_by = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="paid_bi")
     split_on = models.ManyToManyField(Customer,related_name="splits_on")
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="groups")
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="groups", blank=True, null=True)
     item = models.CharField(max_length=100)
     amount = models.FloatField()
     timestamp = models.IntegerField(blank=True, null=True)

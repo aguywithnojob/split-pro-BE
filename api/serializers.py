@@ -120,10 +120,3 @@ class SettlementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Settlement
         fields = '__all__'
-    
-    def to_representation(self, instance):
-        representation = super(SettlementSerializer, self).to_representation(instance)
-        representation['timestamp'] = convert_epoch_to_datetime(representation['timestamp'])
-        representation['paid_by'] = {'id':instance.paid_by.id, 'name':instance.paid_by.name}
-        representation['paid_to'] = {'id':instance.paid_to.id, 'name':instance.paid_to.name}
-        return representation

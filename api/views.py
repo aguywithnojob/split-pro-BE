@@ -39,7 +39,7 @@ class CustomerView(APIView, LoginRequiredMixin):
                 return Response("Records Not Found",status=status.HTTP_404_NOT_FOUND)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     def post(self, request):
         try:
@@ -50,7 +50,7 @@ class CustomerView(APIView, LoginRequiredMixin):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             print('err ==>>',e)
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)    
     
 class GroupView(APIView, LoginRequiredMixin):
     permission_classes = [IsAuthenticated]
@@ -67,7 +67,7 @@ class GroupView(APIView, LoginRequiredMixin):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             print('group error=>>>',e)
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     
     def post(self, request):
@@ -78,7 +78,7 @@ class GroupView(APIView, LoginRequiredMixin):
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     # update by id
     def put(self, request, id):
@@ -90,7 +90,7 @@ class GroupView(APIView, LoginRequiredMixin):
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class SettlementView(APIView, LoginRequiredMixin):
@@ -107,7 +107,7 @@ class SettlementView(APIView, LoginRequiredMixin):
                 return Response("Records Not Found",status=status.HTTP_404_NOT_FOUND)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     # add settlement
     def post(self, request):
         try:
@@ -130,7 +130,7 @@ class SettlementView(APIView, LoginRequiredMixin):
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # add new expense to a group by user
 class ExpenseView(APIView, LoginRequiredMixin):
@@ -147,7 +147,7 @@ class ExpenseView(APIView, LoginRequiredMixin):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             print('errpr>>>', e)
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     # add expense
     def post(self, request):
         try:
@@ -158,7 +158,7 @@ class ExpenseView(APIView, LoginRequiredMixin):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             print('expense creation error ==>',e)
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # update by id
     def put(self, request, id):
@@ -171,7 +171,7 @@ class ExpenseView(APIView, LoginRequiredMixin):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             print('e ===>', e)
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # Activity log of expenses by user or specific group
 class ActivityView(APIView, LoginRequiredMixin):
@@ -213,7 +213,7 @@ class FriendsView(APIView, LoginRequiredMixin):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             print('FriendsView=>>>',e)
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class LoginView(APIView):
     @csrf_exempt
@@ -231,7 +231,7 @@ class LoginView(APIView):
                 return  Response({'message': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
             print('error login ==>',e)
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class LogoutView(APIView):
     def get(self, request):
@@ -242,7 +242,7 @@ class LogoutView(APIView):
             return response
         except Exception as e:
             print('error logout ==>',e)
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class OverallBalanceView(APIView):
     permission_classes = [IsAuthenticated]
@@ -261,7 +261,7 @@ class OverallBalanceView(APIView):
             return Response(str(e), status=status.HTTP_404_NOT_FOUND)
         
         except Exception as e:
-            return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # class MetricView(APIView):
 #     '''
@@ -281,4 +281,4 @@ class OverallBalanceView(APIView):
         
 #         except Exception as e:
 #             print('MetricView =>>> ',e)
-#             return Response("Internal Server Error",status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+#             return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -111,25 +111,31 @@ class SettlementView(APIView, LoginRequiredMixin):
     # add settlement
     def post(self, request):
         try:
-            serializer = SettlementSerializer(data=request.data)
+            expense_include_list = Expense.objects.filter(Q(paid_by = request.user.customer, split_on = request.data.get('friend_id')) | Q( paid_by=request.data.get('friend_id'), split_on = request.user.customer)).exclude(id__in = Settlement.objects.filter(paid_by = request.user.customer, paid_to = request.data.get('friend_id')).values_list('expense_included__id', flat=True)).values_list('id', flat=True)
+            data = {
+                'paid_by': request.user.customer.id,
+                'paid_to': request.data.get('friend_id'),
+                'amount': request.data.get('amount'),
+                'expense_included': expense_include_list
+            }
+            serializer = SettlementSerializer(data=data)
             if serializer.is_valid():
                 # after saving settlement entry make a new entry into expense table with paid_by and split_on single person
                 settlement = serializer.save()
-
                 # Create a new entry in the Expense table
-                expense_data = {
-                    'paid_by': request.data.paid_by,
-                    'split_on': [request.data.paid_to],
-                    'group': settlement.group.id,
-                    'item': 'Settlement',
-                    'amount': request.data.amount
-                }
-                expense_serializer = ExpenseSerializer(data=expense_data)
-                if expense_serializer.is_valid():
-                    expense_serializer.save()
+                # expense_data = {
+                #     'paid_by': request.data.paid_by,
+                #     'split_on': [request.data.get('friend_id')],
+                #     'item': 'Settlement',
+                #     'amount': request.data.get('amount')
+                # }
+                # expense_serializer = ExpenseSerializer(data=expense_data)
+                # if expense_serializer.is_valid():
+                #     expense_serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            print('ererere ==>', e)
             return Response("Internal Server Error:: "+str(e),status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # add new expense to a group by user
@@ -180,9 +186,9 @@ class ActivityView(APIView, LoginRequiredMixin):
         try:
             user_email = request.user
             if not group_id:
-                expenses = Expense.objects.filter(Q(paid_by__email = user_email) | Q( split_on__email = user_email)).distinct().order_by('-timestamp')
+                expenses = Expense.objects.filter(Q(paid_by__email = user_email) | Q( split_on__email = user_email)).distinct().order_by('-updatetimestamp')
             else:
-                expenses = Expense.objects.filter(Q(paid_by__email = user_email) | Q( split_on__email = user_email), group__id=group_id).distinct().order_by('-timestamp')
+                expenses = Expense.objects.filter(Q(paid_by__email = user_email) | Q( split_on__email = user_email), group__id=group_id).distinct().order_by('-updatetimestamp')
 
             serializer = ActivitySerializer(expenses, many=True, context = {'user_email': user_email.email})
             if not serializer.data:

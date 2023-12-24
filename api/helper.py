@@ -21,11 +21,12 @@ def calculate_overall_balance(user_email, group_id = None):
     
     if group_id:
         # group in which you paid or you are part of split_on
-        paid_by_obj = Expense.objects.filter(Q(Q(paid_by=user_obj)| Q(split_on__in=[user_obj])) & Q(group__id=group_id)).distinct()
+        paid_by_obj = Expense.objects.filter(Q(Q(paid_by=user_obj)| Q(split_on__in=[user_obj])) & Q(group__id=group_id)).exclude(expenses__expense_included__in = Expense.objects.filter(paid_by=user_obj, group_id=group_id).values_list('id', flat=True))
+        
     else:
         # in which you paid or you are part of split_on
-        paid_by_obj = Expense.objects.filter(Q(paid_by=user_obj)|Q(split_on__in=[user_obj])).distinct()
-    
+        paid_by_obj = Expense.objects.filter(Q(paid_by=user_obj)|Q(split_on__in=[user_obj])).exclude(expenses__expense_included__in = Expense.objects.filter(paid_by=user_obj).values_list('id', flat=True))
+        print('paid_by_obj === ???? ', paid_by_obj.query)
     for expense_obj in paid_by_obj:
         if user_obj == expense_obj.paid_by:
             if (user_obj not in expense_obj.split_on.all()):

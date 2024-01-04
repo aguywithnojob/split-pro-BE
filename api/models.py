@@ -1,6 +1,16 @@
 from django.db import models
 from datetime import datetime
 from django.contrib.auth.models import User
+
+def validate_decimals(value):
+    try:
+        return round(float(value), 2)
+    except:
+        raise Exception(
+            ('%(value)s is not an integer or a float  number'),
+            params={'value': value},
+        )
+
 # Create your models here.
 class Customer(models.Model):
     name = models.CharField(max_length=50)
@@ -55,13 +65,13 @@ class Expense(models.Model):
     split_on = models.ManyToManyField(Customer,related_name="splits_on")
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="groups", blank=True, null=True)
     item = models.CharField(max_length=100)
-    amount = models.FloatField()
+    amount = models.FloatField(validators=[validate_decimals])
     timestamp = models.IntegerField(blank=True, null=True)
     updatetimestamp = models.IntegerField(blank=True, null=True)
     class Meta:
         db_table = "expenses"
     def __str__(self):
-        return self.paid_by__name+" paid for "+self.item
+        return self.paid_by.name+" paid for "+self.item
     def save(self, *args, **kwargs):
         # Convert epoch timestamp to datetime before saving
         if not self.timestamp:
@@ -74,14 +84,14 @@ class Expense(models.Model):
 class Settlement(models.Model):
     paid_by = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="settlements_paid_by")
     paid_to = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="settlements_paid_to")
-    amount = models.FloatField()
+    amount = models.FloatField(validators=[validate_decimals])
     mode = models.CharField(max_length=50, default="cash")
     expense_included = models.ManyToManyField(Expense, related_name="expenses")
     timestamp = models.IntegerField(blank=True, null=True)
     class Meta:
         db_table = "settlements"
     def __str__(self):
-        return self.paid_by__name+" paid to  "+self.paid_to__name
+        return self.paid_by.name+" paid to  "+self.paid_to.name
     def save(self, *args, **kwargs):
         # Convert epoch timestamp to datetime before saving
         if not self.timestamp:
@@ -89,6 +99,20 @@ class Settlement(models.Model):
         super().save(*args, **kwargs)
 
 
+class Balance(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name="balances")
+    amount = models.FloatField(validators=[validate_decimals], default=0.00)
+    expense_included = models.ManyToManyField(Expense, related_name="balances")
+    timestamp = models.IntegerField(blank=True, null=True)
+    class Meta:
+        db_table = "balances"
+    def __str__(self):
+        return self.customer.name
+    def save(self, *args, **kwargs):
+        # Convert epoch timestamp to datetime before saving
+        if not self.timestamp:
+            self.timestamp = int(datetime.now().timestamp())
+        super().save(*args, **kwargs)
 
         # {
         #     "email":"gautam@gmail.com",
